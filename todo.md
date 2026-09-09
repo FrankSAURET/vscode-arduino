@@ -4,6 +4,14 @@
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
 
+# v2026.9.0.17 — Ligne de version invisible en extension installee
+
+1. ✅ **Cause trouvee** : la chaine passait par `vscode.l10n.t("Version {0}", …)`, mais la clef n'existait pas dans `l10n/bundle.l10n.fr.json`. En F5, VS Code retombe sur la chaine anglaise du code et la ligne s'affiche ; avec le paquet `l10n` charge (extension installee, interface en francais), la clef absente sort vide — paragraphe vide, donc invisible. Rien a voir avec le mode production.
+2. ✅ **Libelle sorti du catalogue** : `` `Version ${displayedVersion}` `` en clair dans [arduinoHomePanel.ts:346](src/arduino/arduinoHomePanel.ts#L346). « Version » s'ecrit de la meme facon en francais et en anglais ; un numero n'est pas une phrase a traduire. Plus aucune dependance a un paquet de traduction pour cette ligne.
+3. ℹ️ **Comportement attendu des deux numeros** confirme : F5 (mode developpement) affiche `2026.9.0.17`, vsix installe (mode production) affiche `2026.9.0`. Voir un numero a 3 segments apres installation est correct.
+4. ⏳ Entree 5 de la v2026.9.0.15 (traduction de « Version {0} ») devient sans objet.
+5. ✅ Compilation, `tslint` et `npm run build:ext` propres.
+
 # v2026.9.0.16 — Lecture fiable du manifeste
 
 1. ✅ **`getExtension(ID)` abandonne** comme source du manifeste : la recherche par identifiant échoue dès que l'extension tourne sous un autre nom d'éditeur, et la ligne de version serait alors vide donc invisible. Le contexte passé à `activate` est la seule source sûre.

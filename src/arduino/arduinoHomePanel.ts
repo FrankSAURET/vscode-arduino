@@ -358,6 +358,9 @@ export class ArduinoHomePanel {
 
         // Numero affiche en bas de la page d'accueil.
         // Hors production, on montre le numero interne a 4 segments (buildNumber).
+        // Le libelle n'est pas localise a dessein : "Version" s'ecrit de la meme
+        // facon dans les langues visees, et une clef absente du paquet l10n
+        // rendrait la ligne vide donc invisible.
         const displayedVersion = ArduinoHomePanel._getDisplayedVersion();
 
         // Localized strings (English defaults, translated via vscode.l10n.t)
@@ -377,7 +380,7 @@ export class ArduinoHomePanel {
             welcomeTitle: vscode.l10n.t("VsCode Arduino"),
             welcomeText: vscode.l10n.t("Welcome! To get started, create a new project or open a folder containing an Arduino sketch (.ino)."),
             openExistingProject: vscode.l10n.t("Open Existing Project"),
-            version: vscode.l10n.t("Version {0}", displayedVersion),
+            version: `Version ${displayedVersion}`,
             welcomeHint: vscode.l10n.t("Use the toolbar on the left to navigate between views, or {0} → \"Arduino\" to access all commands.", "Ctrl+Shift+P"),
             settingsTitle: vscode.l10n.t("Settings"),
             openInVsCodeSettings: vscode.l10n.t("Open in VS Code Settings"),
