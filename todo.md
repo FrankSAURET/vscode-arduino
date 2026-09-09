@@ -4,6 +4,13 @@
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
 
+# v2026.9.0.13 — MiniCore ajouté aux URLs de cartes par défaut
+
+1. ✅ **URL MiniCore par défaut** : `https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json` ajoutée en `default` du réglage `arduino.additionalUrls` dans le manifeste. Les nouvelles installations voient MiniCore sans rien configurer — utile pour l'ATmega328PB de la Joy-IT ARD-One-C (v2026.9.0.12).
+2. ✅ **Réglages déjà personnalisés couverts** : un `default` de manifeste est ignoré dès que l'utilisateur a enregistré sa propre liste. `VscodeSettings.additionalUrls` complète donc la valeur lue avec les URLs par défaut manquantes, sans réécrire les réglages de l'utilisateur (constante `defaultAdditionalUrls` dans `src/arduino/vscodeSettings.ts`).
+3. ℹ️ Le complément est fait à la lecture : l'URL part au CLI (`--additional-urls`) et alimente le gestionnaire de cartes, mais n'apparaît pas ajoutée de force dans le fichier de réglages. L'utilisateur qui la retire la reverra revenir — comportement voulu pour une URL « par défaut ».
+4. ✅ Construction (`npm run build:ext`) propre.
+
 # v2026.9.0.12 — Identification des ports série
 
 1. ✅ **Carte Joy-IT ARD-One-C diagnostiquée.** Échec de téléversement : la carte porte un **ATmega328PB** (`1E 95 16`) et non un ATmega328P (`1E 95 0F`). Cause extérieure à l'extension, message d'avrdude. Solution : MiniCore, carte ATmega328 / variante 328PB / bootloader UNO / 16 MHz externe. Le message « Aucune nouvelle donnée IntelliSense capturée » qui suivait est indépendant et normal (cache de compilation réutilisé).

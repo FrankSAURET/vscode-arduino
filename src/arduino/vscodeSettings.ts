@@ -26,6 +26,13 @@ const configKeys = {
     OUTPUT_VERBOSITY: "arduino.outputVerbosity",
 };
 
+// URLs de gestionnaire de cartes toujours présentes, même si l'utilisateur a
+// déjà enregistré sa propre liste (le "default" du manifeste ne s'applique
+// qu'aux réglages jamais modifiés).
+const defaultAdditionalUrls = [
+    "https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json",
+];
+
 export interface IVscodeSettings {
     arduinoPath: string;
     commandPath: string;
@@ -89,7 +96,9 @@ export class VscodeSettings implements IVscodeSettings {
             this.updateAdditionalUrls(split);
         }
 
-        return split;
+        // Complète avec les URLs par défaut manquantes sans réécrire les réglages
+        const missing = defaultAdditionalUrls.filter((defaultUrl) => !split.includes(defaultUrl));
+        return missing.length ? split.concat(missing) : split;
     }
 
     public get logLevel(): string {

@@ -3,7 +3,7 @@
   "displayName": "Arduino VsCode IDE",
   "description": "Arduino IDE integration for VS Code — CLI-based, fork of Microsoft's extension",
   "version": "2026.9.0",
-  "buildNumber": "2026.9.0.12",
+  "buildNumber": "2026.9.0.13",
   "publisher": "electropol-fr",
   "preview": true,
   "engines": {
@@ -538,6 +538,9 @@
           "items": {
             "type": "string"
           },
+          "default": [
+            "https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json"
+          ],
           "description": "%arduino.configuration.additionalUrls.description%"
         },
         "arduino.portNames": {
