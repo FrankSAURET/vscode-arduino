@@ -4,6 +4,21 @@
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
 
+# v2026.9.0.14 — Installation guidée de l'environnement Arduino (machine sans Arduino IDE)
+
+1. ✅ **Cause du « ça ne fonctionne pas sur une machine neuve »** : le téléchargement d'`arduino-cli` existait déjà, mais le CLI seul n'embarque **aucun compilateur**. Sans cœur installé : liste de cartes vide, `Vérifier` en échec, IntelliSense sans chemins d'en-têtes. Rien ne proposait d'installer un cœur.
+2. ✅ Nouveau `src/arduino/environmentSetup.ts` : parcours complet en une barre de progression — `arduino-cli` (téléchargé si absent) → `core update-index` → `core install arduino:avr` (avr-gcc + avrdude) → `lib update-index` → extension C/C++. Chaque étape est sautée si déjà satisfaite.
+3. ✅ **Détection de l'état réel** (`getEnvironmentStatus`) : le CLI doit *répondre* (`arduino-cli version`), pas seulement exister — un binaire tronqué ou d'architecture étrangère existe sans fonctionner. Cœurs lus par `core list --json`, filtrés sur `installed_version` pour ne jamais compter une simple entrée d'index.
+4. ✅ **Repli hors CLI** (`hasCoreOnDisk`) : un cœur se voit au dossier `packages/<éditeur>/hardware/<arch>/<version>/boards.txt`. Sert quand le CLI ne répond pas.
+5. ✅ **Une seule notification** au lieu de trois : « environnement Arduino incomplet — Installer / Plus tard / Ne plus proposer » (état dans `globalState`, clé `arduino.environmentSetupPrompt`). Remplace l'ancien prompt qui ne parlait que du CLI. La recommandation C/C++ isolée ne s'affiche plus que si l'environnement est déjà complet — les deux ne se superposent jamais.
+6. ✅ Commande `arduino.setupEnvironment` (« Arduino : Installer l'environnement Arduino ») pour relancer le parcours à la main. Enregistrée hors de `registerArduinoCommand` : celui-ci exige un CLI valide, ce que la commande a précisément pour rôle de fournir.
+7. ✅ `arduinoActivator` : `promptAndReloadCli` remplacé par `reloadAfterEnvironmentChange()` publique — réinit des réglages + rechargement cartes/bibliothèques après installation d'un CLI ou d'un cœur. Toujours hors du chemin critique d'activation (un `await` sur un clic y ferait annuler l'activation par VS Code).
+8. ✅ Après installation d'un cœur, `arduino.rebuildIntelliSenseConfig` est relancé : le `c_cpp_properties.json` généré sans cœur ne pouvait pas contenir de chemins d'en-têtes valides.
+9. ✅ Un seul cœur installé d'office (`arduino:avr`), choix assumé : c'est celui des Uno/Nano/Mega. Les autres passent par le gestionnaire de cartes.
+10. ⏳ À valider sur une machine réellement vierge (sans Arduino IDE ni arduino-cli) : affichage de la notification et déroulé complet du parcours.
+11. ⏳ Traductions : chaînes anglaises et françaises du manifeste faites ; les chaînes `vscode.l10n.t` de `environmentSetup.ts` restent à traduire dans `l10n/` avant publication.
+12. ✅ Compilation TypeScript et tslint propres. Détection vérifiée à l'exécution sur code compilé (CLI présent → cœurs vus ; CLI absent + disque → repli ; rien → environnement incomplet).
+
 # v2026.9.0.13 — MiniCore ajouté aux URLs de cartes par défaut
 
 1. ✅ **URL MiniCore par défaut** : `https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json` ajoutée en `default` du réglage `arduino.additionalUrls` dans le manifeste. Les nouvelles installations voient MiniCore sans rien configurer — utile pour l'ATmega328PB de la Joy-IT ARD-One-C (v2026.9.0.12).

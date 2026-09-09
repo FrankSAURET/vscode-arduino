@@ -1,6 +1,7 @@
 {
   "arduino.command.initialize": "Arduino: Initialize",
   "arduino.command.openProjectFolder": "Arduino: Open Project Folder",
+  "arduino.command.setupEnvironment": "Arduino: Install the Arduino Environment",
   "arduino.command.verify": "Arduino: Verify",
   "arduino.command.upload": "Arduino: Upload",
   "arduino.command.cliUpload": "Arduino CLI: Upload",

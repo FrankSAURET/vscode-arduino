@@ -27,6 +27,7 @@ import { DeviceContext } from "./deviceContext";
 const completionProviderModule = impor("./langService/completionProvider") as typeof import ("./langService/completionProvider");
 import { BuildMode } from "./arduino/arduino";
 import { checkForCliUpdate } from "./arduino/cliDownloader";
+import { getEnvironmentStatus, promptSetupEnvironment, setupEnvironment } from "./arduino/environmentSetup";
 import { recommendCppTools, recommendKablix } from "./arduino/extensionRecommendation";
 import { getUserPortNames, resolvePortName, setUserPortName } from "./arduino/portIdentification";
 import { applyArduinoTheme } from "./arduino/themeManager";
@@ -470,6 +471,43 @@ export async function activate(context: vscode.ExtensionContext) {
         return;
     });
 
+    // Installe tout ce qu'il faut pour programmer une carte AVR : arduino-cli, index des
+    // paquets, cœur arduino:avr (avr-gcc + avrdude), extension C/C++ pour l'IntelliSense.
+    // Volontairement hors de registerArduinoCommand : celui-ci exige un CLI valide, ce que
+    // cette commande a précisément pour rôle de fournir.
+    const runEnvironmentSetup = async (): Promise<void> => {
+        if (!arduinoContextModule.default.initialized) {
+            try {
+                await arduinoActivatorModule.default.activate();
+            } catch {
+                // Activation partielle possible sans CLI : le parcours reste utile
+            }
+        }
+        const settings = arduinoContextModule.default.initialized
+            ? arduinoContextModule.default.arduinoApp.settings
+            : undefined;
+        const result = await setupEnvironment(
+            context.extensionPath,
+            () => (settings ? settings.commandPath : ""),
+            () => (arduinoContextModule.default.initialized
+                ? arduinoContextModule.default.arduinoApp.getAdditionalUrlsArgs()
+                : []),
+        );
+        if (result.cliInstalled || result.coreInstalled) {
+            await arduinoActivatorModule.default.reloadAfterEnvironmentChange();
+        }
+        // Régénérer la configuration IntelliSense : sans cœur installé, les chemins d'en-têtes
+        // étaient introuvables, donc le c_cpp_properties.json généré (s'il l'était) était vide.
+        if (result.coreInstalled) {
+            try {
+                await vscode.commands.executeCommand("arduino.rebuildIntelliSenseConfig");
+            } catch {
+                // Pas de croquis ouvert ou IntelliSense désactivé : sans conséquence
+            }
+        }
+    };
+    registerNonArduinoCommand("arduino.setupEnvironment", runEnvironmentSetup);
+
     context.subscriptions.push(vscode.commands.registerCommand("arduino.openSerialTracer", openSerialTracer));
     context.subscriptions.push(vscode.commands.registerCommand("arduino.openSerialMonitor", async () => {
         try {
@@ -708,11 +746,27 @@ export async function activate(context: vscode.ExtensionContext) {
         recommendKablix(context).catch((error) => Logger.traceError("recommendKablixError", error));
     });
 
-    // C/C++ is no longer a hard dependency: suggest it only when IntelliSense
-    // generation is on and the extension is missing. Delayed after Kablix so
-    // both notifications never stack up.
-    deferred(20000, () => {
-        recommendCppTools(context).catch((error) => Logger.traceError("recommendCppToolsError", error));
+    // Environnement incomplet (machine sans Arduino IDE ni arduino-cli, ou CLI sans cœur
+    // installé) : une seule notification propose le parcours complet. Hors du chemin critique
+    // d'activation — attendre un clic pendant activate() ferait annuler l'activation.
+    deferred(12000, () => {
+        (async () => {
+            const settings = arduinoContextModule.default.initialized
+                ? arduinoContextModule.default.arduinoApp.settings
+                : undefined;
+            const status = await getEnvironmentStatus(
+                settings ? settings.commandPath : "",
+                settings ? settings.packagePath : "",
+            );
+            if (await promptSetupEnvironment(context, status)) {
+                await runEnvironmentSetup();
+                return;
+            }
+            // Environnement complet : reste seulement à proposer C/C++ pour l'IntelliSense.
+            if (status.hasCli && status.hasCore) {
+                await recommendCppTools(context);
+            }
+        })().catch((error) => Logger.traceError("setupEnvironmentError", error));
     });
 }
 

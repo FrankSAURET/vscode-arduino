@@ -6,7 +6,6 @@ import * as vscode from "vscode";
 import { ArduinoApp } from "./arduino/arduino";
 import { ArduinoSettings } from "./arduino/arduinoSettings";
 import { BoardManager } from "./arduino/boardManager";
-import { promptDownloadCli } from "./arduino/cliDownloader";
 import { ExampleManager } from "./arduino/exampleManager";
 import { ExampleProvider } from "./arduino/exampleProvider";
 import { LibraryManager } from "./arduino/libraryManager";
@@ -35,15 +34,11 @@ class ArduinoActivator {
             const arduinoSettings = new ArduinoSettings();
             await arduinoSettings.initialize(this._extensionPath);
 
-            // Si aucun arduino-cli réellement invocable n'est présent, proposer le téléchargement.
-            // Ce prompt NE DOIT PAS bloquer ni faire échouer l'activation : attendre le clic de
-            // l'utilisateur pendant activate() peut faire annuler l'activation par VS Code
-            // (erreur "Canceled") et laisse l'extension sans cartes ni bibliothèques. On le lance
-            // donc en arrière-plan ; les cartes/bibliothèques déjà installées restent lisibles
+            // Environnement incomplet (pas de CLI, pas de cœur) : le parcours d'installation est
+            // proposé par extension.ts, hors du chemin critique. Attendre un clic ici ferait
+            // annuler l'activation par VS Code (erreur "Canceled") et laisserait l'extension sans
+            // cartes ni bibliothèques. Les cartes/bibliothèques déjà installées restent lisibles
             // depuis les fichiers d'index, sans CLI.
-            if (!arduinoSettings.usableCli && this._extensionPath) {
-                this.promptAndReloadCli(arduinoSettings);
-            }
 
             const arduinoApp = new ArduinoApp(arduinoSettings);
 
@@ -86,27 +81,24 @@ class ArduinoActivator {
     }
 
     /**
-     * Propose (hors du chemin critique d'activation) de télécharger arduino-cli, puis
-     * réinitialise les réglages et recharge cartes/bibliothèques une fois le CLI présent.
+     * Réinitialise les réglages puis recharge cartes et bibliothèques.
+     * Appelé après l'installation d'un CLI ou d'un cœur : les chemins résolus et les
+     * index lus au démarrage sont devenus obsolètes.
      */
-    private promptAndReloadCli(arduinoSettings: ArduinoSettings): void {
-        promptDownloadCli(this._extensionPath).then(async (downloadedDir) => {
-            if (!downloadedDir) {
-                return;
-            }
-            await arduinoSettings.initialize(this._extensionPath);
-            if (this._arduinoApp) {
-                await this._arduinoApp.initialize(true);
-                if (this._arduinoApp.boardManager) {
-                    await this._arduinoApp.boardManager.loadPackages(true);
-                }
-                if (this._arduinoApp.libraryManager) {
-                    await this._arduinoApp.libraryManager.loadLibraries(true);
-                }
-            }
-        }).catch(() => {
-            // Échec silencieux : l'utilisateur peut relancer via la commande d'installation du CLI
-        });
+    public async reloadAfterEnvironmentChange(): Promise<void> {
+        if (this._arduinoSettings) {
+            await this._arduinoSettings.initialize(this._extensionPath);
+        }
+        if (!this._arduinoApp) {
+            return;
+        }
+        await this._arduinoApp.initialize(true);
+        if (this._arduinoApp.boardManager) {
+            await this._arduinoApp.boardManager.loadPackages(true);
+        }
+        if (this._arduinoApp.libraryManager) {
+            await this._arduinoApp.libraryManager.loadLibraries(true);
+        }
     }
 }
 export default new ArduinoActivator();
