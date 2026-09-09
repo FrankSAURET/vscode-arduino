@@ -24,6 +24,7 @@ import * as util from "./common/util";
 import { ArduinoWorkspace } from "./common/workspace";
 const arduinoDebugConfigurationProviderModule = impor("./debug/configurationProvider") as typeof import ("./debug/configurationProvider");
 import { DeviceContext } from "./deviceContext";
+import { setExtensionMode } from "./extensionInfo";
 const completionProviderModule = impor("./langService/completionProvider") as typeof import ("./langService/completionProvider");
 import { BuildMode } from "./arduino/arduino";
 import { checkForCliUpdate } from "./arduino/cliDownloader";
@@ -49,6 +50,7 @@ const TELEPLOT_EXTENSION_ID = "alexnesnes.teleplot";
 const TELEPLOT_START_COMMAND = "teleplot.start";
 
 export async function activate(context: vscode.ExtensionContext) {
+    setExtensionMode(context.extensionMode);
     Logger.configure(context);
     const pendingBoardSelectionKey = "arduino.pendingBoardSelectionPath";
     const showHomeOnActivateKey = "arduino.showHomeOnActivate";

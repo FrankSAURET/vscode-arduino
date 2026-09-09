@@ -3,6 +3,7 @@ import * as child_process from "child_process";
 import * as vscode from "vscode";
 import ArduinoContext from "../arduinoContext";
 import { DeviceContext } from "../deviceContext";
+import { getExtensionPackageJSON, isProductionMode } from "../extensionInfo";
 import { getDownloadedCliExecutable } from "./cliDownloader";
 import { getUserPortNames, resolvePortName } from "./portIdentification";
 import { canStoreArduinoThemeLocally } from "./themeManager";
@@ -324,6 +325,21 @@ export class ArduinoHomePanel {
         }
     }
 
+    /**
+     * Numero de version a afficher : la version publique du manifeste,
+     * completee du numero interne (buildNumber) quand l'extension ne tourne
+     * pas en production (developpement ou tests).
+     */
+    private static _getDisplayedVersion(): string {
+        const packageJSON = getExtensionPackageJSON();
+        const version = <string>packageJSON.version || "";
+        const buildNumber = <string>packageJSON.buildNumber || "";
+        if (!isProductionMode() && buildNumber) {
+            return buildNumber;
+        }
+        return version;
+    }
+
     private _getHtml(initialView?: string): string {
         const webview = this._panel.webview;
         const csp = webview.cspSource;
@@ -339,6 +355,10 @@ export class ArduinoHomePanel {
         const parametersIcon = this._iconUri("parameters.svg");
 
         const defaultView = initialView || "";
+
+        // Numero affiche en bas de la page d'accueil.
+        // Hors production, on montre le numero interne a 4 segments (buildNumber).
+        const displayedVersion = ArduinoHomePanel._getDisplayedVersion();
 
         // Localized strings (English defaults, translated via vscode.l10n.t)
         const t = {
@@ -357,6 +377,7 @@ export class ArduinoHomePanel {
             welcomeTitle: vscode.l10n.t("VsCode Arduino"),
             welcomeText: vscode.l10n.t("Welcome! To get started, create a new project or open a folder containing an Arduino sketch (.ino)."),
             openExistingProject: vscode.l10n.t("Open Existing Project"),
+            version: vscode.l10n.t("Version {0}", displayedVersion),
             welcomeHint: vscode.l10n.t("Use the toolbar on the left to navigate between views, or {0} → \"Arduino\" to access all commands.", "Ctrl+Shift+P"),
             settingsTitle: vscode.l10n.t("Settings"),
             openInVsCodeSettings: vscode.l10n.t("Open in VS Code Settings"),
@@ -604,6 +625,12 @@ export class ArduinoHomePanel {
             max-width: 320px;
             line-height: 1.5;
             margin-top: 8px;
+        }
+        .welcome-version {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            opacity: 0.55;
+            margin-top: 24px;
         }
         .welcome-kbd {
             display: inline-block;
@@ -898,6 +925,7 @@ export class ArduinoHomePanel {
                 </button>
             </div>
             <p class="welcome-hint">${t.welcomeHint}</p>
+            <p class="welcome-version">${t.version}</p>
         </div>
         <iframe id="frame" style="display:none;"></iframe>
 

@@ -4,6 +4,15 @@
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
 
+# v2026.9.0.15 — Numéro de version sur la page d'accueil
+
+1. ✅ **Ligne de version en bas de l'accueil** du panneau « VsCode Arduino » (`src/arduino/arduinoHomePanel.ts`) : nouveau paragraphe `.welcome-version`, sous l'astuce, discret (11 px, opacité 0,55).
+2. ✅ **Deux numéros selon le mode** : en production, la version publique du manifeste (`2026.9.0`) ; hors production, le numéro interne à 4 segments (`buildNumber`, `2026.9.0.15`). Conforme à la règle « l'utilisateur ne voit jamais le 4e segment ».
+3. ✅ Nouveau `src/extensionInfo.ts` : le mode d'exécution n'était mémorisé nulle part. `setExtensionMode(context.extensionMode)` est appelé en tête d'`activate`, `isProductionMode()` et `getExtensionPackageJSON()` servent de point d'accès unique. Sans information de mode, on suppose la production — un doute ne doit rien divulguer d'interne.
+4. ✅ Chaîne « Version {0} » passée par `vscode.l10n.t`, langue de base seulement.
+5. ⏳ Traduction de la chaîne « Version {0} » à faire avant publication.
+6. ✅ Compilation TypeScript propre.
+
 # v2026.9.0.14 — Installation guidée de l'environnement Arduino (machine sans Arduino IDE)
 
 1. ✅ **Cause du « ça ne fonctionne pas sur une machine neuve »** : le téléchargement d'`arduino-cli` existait déjà, mais le CLI seul n'embarque **aucun compilateur**. Sans cœur installé : liste de cartes vide, `Vérifier` en échec, IntelliSense sans chemins d'en-têtes. Rien ne proposait d'installer un cœur.
