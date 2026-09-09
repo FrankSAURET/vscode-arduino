@@ -1,9 +1,9 @@
 # À faire
-
+1. ⏳ Carte Joy-IT ARD-One-C : échec de téléversement, signature attendue `1E 95 0F` (ATmega328P) alors que la carte porte un **ATmega328PB** (`1E 95 16`). Cause extérieure à l'extension : le message vient d'avrdude. Solution propre : installer MiniCore (`https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json`), carte ATmega328 / variante 328PB / bootloader UNO / 16 MHz externe. Contournement : `buildPreferences` dans `arduino.json` pour passer `-F` à avrdude (compile alors pour un 328P, périphériques du PB inaccessibles). Le message « Aucune nouvelle donnée IntelliSense capturée » est indépendant et normal : cache de compilation réutilisé.
 1. ⬜ Tester l'installation d'une plateforme tierce (ESP32) via URL additionnelle (correctif v2026.7.0)
 3. ⏳ macOS / Linux : valider la détection du CLI embarqué d'Arduino IDE 2 sur machine réelle (v2026.7.3)
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
-9. ⬜ Vérifier l'affichage réel de la notification C/C++ (VS Code sans cpptools installé, IntelliSense activé)
+
 
 # v2026.9.0.11 — F5 : retour au fonctionnement d'origine
 
