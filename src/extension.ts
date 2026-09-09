@@ -28,6 +28,7 @@ const completionProviderModule = impor("./langService/completionProvider") as ty
 import { BuildMode } from "./arduino/arduino";
 import { checkForCliUpdate } from "./arduino/cliDownloader";
 import { recommendCppTools, recommendKablix } from "./arduino/extensionRecommendation";
+import { getUserPortNames, resolvePortName, setUserPortName } from "./arduino/portIdentification";
 import { applyArduinoTheme } from "./arduino/themeManager";
 import { listSerialPorts } from "./common/portList";
 import * as Logger from "./logger/logger";
@@ -495,6 +496,44 @@ export async function activate(context: vscode.ExtensionContext) {
         if (chosen) {
             DeviceContext.getInstance().port = chosen.label;
         }
+    });
+
+    // Renommage d'un port : les cartes a pont serie generique (CH340, CP2102...)
+    // ne portent aucun identifiant propre, aucun outil ne peut donc deviner leur
+    // modele. Le nom saisi ici est memorise par port dans les reglages globaux.
+    registerNonArduinoCommand("arduino.renamePort", async () => {
+        const ports = await listSerialPorts();
+        if (!ports.length) {
+            vscode.window.showInformationMessage(vscode.l10n.t("No serial port is available."));
+            return;
+        }
+        const userNames = getUserPortNames();
+        const chosen = await vscode.window.showQuickPick(
+            ports.map((p) => {
+                const resolved = resolvePortName(p.port, {
+                    manufacturer: p.desc,
+                    pid: p.productId,
+                    vid: p.vendorId,
+                }, "", userNames);
+                return { label: p.port, description: resolved.label };
+            }).sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : 0),
+            { placeHolder: vscode.l10n.t("Select the port to rename") },
+        );
+        if (!chosen) {
+            return;
+        }
+        const newName = await vscode.window.showInputBox({
+            placeHolder: vscode.l10n.t("For example: Joy-IT ARD-One-C"),
+            prompt: vscode.l10n.t("Name to display for {0} (leave empty to restore automatic detection)", chosen.label),
+            value: userNames[chosen.label] || "",
+        });
+        // showInputBox renvoie undefined si l'utilisateur annule : ne rien faire.
+        // Une chaine vide, elle, demande explicitement le retour a la detection.
+        if (newName === undefined) {
+            return;
+        }
+        await setUserPortName(chosen.label, newName);
+        arduinoHomePanelModule.ArduinoHomePanel.refreshConnectedBoards();
     });
 
     registerArduinoCommand("arduino.changeBoardType", async () => {

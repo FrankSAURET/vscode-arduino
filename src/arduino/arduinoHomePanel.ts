@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import ArduinoContext from "../arduinoContext";
 import { DeviceContext } from "../deviceContext";
 import { getDownloadedCliExecutable } from "./cliDownloader";
+import { getUserPortNames, resolvePortName } from "./portIdentification";
 import { canStoreArduinoThemeLocally } from "./themeManager";
 
 /**
@@ -27,6 +28,17 @@ export class ArduinoHomePanel {
     public static disposeCurrent() {
         if (ArduinoHomePanel.currentPanel) {
             ArduinoHomePanel.currentPanel.dispose();
+        }
+    }
+
+    /**
+     * Redemande la liste des ports au panneau ouvert, s'il y en a un.
+     * Appele apres un renommage de port pour que le nouveau libelle apparaisse
+     * sans attendre la prochaine scrutation.
+     */
+    public static refreshConnectedBoards() {
+        if (ArduinoHomePanel.currentPanel) {
+            ArduinoHomePanel.currentPanel._sendConnectedBoards();
         }
     }
 
@@ -212,7 +224,7 @@ export class ArduinoHomePanel {
     }
 
     private async _sendConnectedBoards() {
-        const boards: Array<{name: string; port: string; fqbn: string}> = [];
+        const boards: Array<{name: string; nameSource: string; port: string; fqbn: string}> = [];
         let selectedPort = "";
         try {
             const dc = DeviceContext.getInstance();
@@ -252,6 +264,8 @@ export class ArduinoHomePanel {
             const parsed = JSON.parse(result);
             // arduino-cli board list --format json returns an array of detected_ports
             const ports = Array.isArray(parsed) ? parsed : (parsed.detected_ports || []);
+            // Noms attribues manuellement : lus une fois pour toute la liste.
+            const userNames = getUserPortNames();
             for (const entry of ports) {
                 const port = entry.port || {};
                 const portAddress = port.address || port.label || "";
@@ -260,18 +274,25 @@ export class ArduinoHomePanel {
                 if (portProtocol && portProtocol !== "serial") {
                     continue;
                 }
+                const properties = port.properties || {};
                 const matchingBoards = entry.matching_boards || [];
                 if (matchingBoards.length > 0) {
                     for (const mb of matchingBoards) {
+                        const resolved = resolvePortName(portAddress, properties, mb.name, userNames);
                         boards.push({
-                            name: mb.name || "Unknown board",
+                            name: resolved.label,
+                            nameSource: resolved.source,
                             port: portAddress,
                             fqbn: mb.fqbn || "",
                         });
                     }
                 } else {
+                    // Aucune carte reconnue : on descend l'echelle des replis
+                    // (product, manufacturer, table VID/PID, port sans USB).
+                    const resolved = resolvePortName(portAddress, properties, "", userNames);
                     boards.push({
-                        name: "Unknown",
+                        name: resolved.label,
+                        nameSource: resolved.source,
                         port: portAddress,
                         fqbn: "",
                     });

@@ -1,9 +1,20 @@
 # À faire
-1. ⏳ Carte Joy-IT ARD-One-C : échec de téléversement, signature attendue `1E 95 0F` (ATmega328P) alors que la carte porte un **ATmega328PB** (`1E 95 16`). Cause extérieure à l'extension : le message vient d'avrdude. Solution propre : installer MiniCore (`https://mcudude.github.io/MiniCore/package_MCUdude_MiniCore_index.json`), carte ATmega328 / variante 328PB / bootloader UNO / 16 MHz externe. Contournement : `buildPreferences` dans `arduino.json` pour passer `-F` à avrdude (compile alors pour un 328P, périphériques du PB inaccessibles). Le message « Aucune nouvelle donnée IntelliSense capturée » est indépendant et normal : cache de compilation réutilisé.
 1. ⬜ Tester l'installation d'une plateforme tierce (ESP32) via URL additionnelle (correctif v2026.7.0)
 3. ⏳ macOS / Linux : valider la détection du CLI embarqué d'Arduino IDE 2 sur machine réelle (v2026.7.3)
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
+
+# v2026.9.0.12 — Identification des ports série
+
+1. ✅ **Carte Joy-IT ARD-One-C diagnostiquée.** Échec de téléversement : la carte porte un **ATmega328PB** (`1E 95 16`) et non un ATmega328P (`1E 95 0F`). Cause extérieure à l'extension, message d'avrdude. Solution : MiniCore, carte ATmega328 / variante 328PB / bootloader UNO / 16 MHz externe. Le message « Aucune nouvelle donnée IntelliSense capturée » qui suivait est indépendant et normal (cache de compilation réutilisé).
+2. ✅ **Ports non reconnus mieux nommés.** Les cartes à pont USB-série générique portent le VID/PID du fabricant du pont, partagé par des milliers de modèles : `arduino-cli` ne peut rien affirmer et laissait « Unknown ». Nouveau `src/arduino/portIdentification.ts` : échelle de replis à six rangs — nom attribué par l'utilisateur, carte reconnue par le CLI, `product`, `manufacturer`, table VID/PID interne, port sans propriété USB.
+3. ✅ **Table des ponts série courants** : CH340/CH341/CH9102 (WCH), CP2102/CP2105/CP2108 (Silicon Labs), FTDI, PL2303 (Prolific), USB natif Espressif et Raspberry Pi.
+4. ✅ **Ports de la machine distingués des cartes.** Un port sans aucun identifiant USB (COM1, port de carte mère) s'affiche « Port série » et non plus « Unknown » — il n'était pas distinguable d'une carte non reconnue.
+5. ✅ **Commande `arduino.renamePort`** (« Arduino : Renommer un port série ») : nom mémorisé par port dans le réglage global `arduino.portNames`. Saisie vide = retour à la détection automatique. Seul moyen d'obtenir « Joy-IT ARD-One-C — COM5 », aucun outil ne pouvant deviner le modèle.
+6. ✅ `ArduinoHomePanel.refreshConnectedBoards()` ajouté : le sélecteur se rafraîchit aussitôt après un renommage, sans attendre la scrutation suivante.
+7. ✅ Résolution vérifiée sur les trois ports réels de la machine plus quatre cas de repli : les six rangs sortent le libellé attendu. Construction et `tslint` propres.
+8. ℹ️ **La signature de la puce ne peut pas servir à remplir la liste** : la lire impose d'ouvrir le port et de réinitialiser la carte, ce qui couperait un croquis en cours ou un moniteur série ouvert. Elle identifie de plus le microcontrôleur, jamais le modèle de carte.
+9. ⏳ Traduction : seul le français est à jour (langue de base anglaise incluse). Autres langues à faire avant publication.
 
 # v2026.9.0.11 — F5 : retour au fonctionnement d'origine
 

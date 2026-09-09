@@ -3,7 +3,7 @@
   "displayName": "Arduino VsCode IDE",
   "description": "Arduino IDE integration for VS Code — CLI-based, fork of Microsoft's extension",
   "version": "2026.9.0",
-  "buildNumber": "2026.9.0.11",
+  "buildNumber": "2026.9.0.12",
   "publisher": "electropol-fr",
   "preview": true,
   "engines": {
@@ -105,6 +105,10 @@
         "command": "arduino.selectSerialPort",
         "title": "%arduino.command.selectSerialPort%",
         "icon": "images/selectSerialPort.svg"
+      },
+      {
+        "command": "arduino.renamePort",
+        "title": "%arduino.command.renamePort%"
       },
       {
         "command": "arduino.openSerialTracer",
@@ -535,6 +539,14 @@
             "type": "string"
           },
           "description": "%arduino.configuration.additionalUrls.description%"
+        },
+        "arduino.portNames": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "%arduino.configuration.portNames.description%"
         },
         "arduino.logLevel": {
           "type": "string",
