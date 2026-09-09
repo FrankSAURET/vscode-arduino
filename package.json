@@ -3,7 +3,7 @@
   "displayName": "Arduino VsCode IDE",
   "description": "Arduino IDE integration for VS Code — CLI-based, fork of Microsoft's extension",
   "version": "2026.9.0",
-  "buildNumber": "2026.9.0.15",
+  "buildNumber": "2026.9.0.16",
   "publisher": "electropol-fr",
   "preview": true,
   "engines": {

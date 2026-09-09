@@ -4,6 +4,13 @@
 8. ⬜ Vérifier l'affichage réel de la notification Kablix (premier lancement + après mise à jour) sur une instance VS Code
 
 
+# v2026.9.0.16 — Lecture fiable du manifeste
+
+1. ✅ **`getExtension(ID)` abandonne** comme source du manifeste : la recherche par identifiant échoue dès que l'extension tourne sous un autre nom d'éditeur, et la ligne de version serait alors vide donc invisible. Le contexte passé à `activate` est la seule source sûre.
+2. ✅ `setExtensionMode` remplacé par `setExtensionContext(context)` dans [extensionInfo.ts](src/extensionInfo.ts) : mémorise le mode **et** `context.extension.packageJSON`, avec repli par lecture disque de `package.json` via `context.extensionPath`. `getExtension` ne sert plus que d'ultime recours.
+3. ℹ️ Le HTML du panneau d'accueil n'est posé qu'à sa création : un panneau resté ouvert conserve l'ancien rendu. Fermer l'onglet et recharger la fenêtre pour voir la ligne apparaître.
+4. ✅ Compilation, `tslint` et `npm run build:ext` propres.
+
 # v2026.9.0.15 — Numéro de version sur la page d'accueil
 
 1. ✅ **Ligne de version en bas de l'accueil** du panneau « VsCode Arduino » (`src/arduino/arduinoHomePanel.ts`) : nouveau paragraphe `.welcome-version`, sous l'astuce, discret (11 px, opacité 0,55).
